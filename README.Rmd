@@ -1,0 +1,27 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This repository holds all data and code used for SOC 721S.
+
+I'm not sharing the `raw_data` folder, which is quite heavy.
+
+```{r}
+sum(fs::file_size(dir("raw_data", full.names = TRUE, recursive = TRUE)))
+```
+
+And is structured like this:
+
+```{r}
+fs::dir_tree("raw_data")
+```
+
