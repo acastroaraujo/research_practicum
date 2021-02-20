@@ -3,6 +3,14 @@
 
 This repository holds all data and code used for SOC 721S.
 
+## plots
+
+**Drug coverage:**
+
+<img src="nsduh_coverage.png" width="100%" />
+
+## raw data
+
 I’m not sharing the `raw_data` folder, which is quite heavy.
 
 ``` r
