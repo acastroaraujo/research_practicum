@@ -21,6 +21,22 @@ __Drug coverage:__
 knitr::include_graphics("nsduh_coverage.png")
 ```
 
+__Drug usage:__
+
+```{r, out.width="100%", echo=FALSE}
+knitr::include_graphics("nsduh_counts.png")
+```
+
+
+Some of the proportions —especially around `2015`— might give misleading results if the question changes:
+
+```{r, echo=FALSE, message=FALSE}
+library(dplyr)
+as.data.frame( readRDS("coverage.rds") ) %>% 
+  filter(n >= 16) %>% 
+  arrange(desc(description), desc(year))
+```
+
 
 ## raw data
 
