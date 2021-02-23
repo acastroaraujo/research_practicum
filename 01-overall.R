@@ -51,7 +51,6 @@ extract_all_props <- function(i) {
 
 # Extract all proportions -------------------------------------------------
 
-
 output <- vector("list", length = nrow(waves_df))
 
 for (i in seq_along(output)) {
@@ -95,4 +94,27 @@ df %>%
         legend.key.width = unit(0.09,"npc")) 
 
 ggsave("nsduh_counts.png", device = "png", dpi = "print",
+       width = 10, height = 6)
+
+
+df %>% 
+  filter(str_detect(description, "ALCOHOL|MARIJUANA|CIGARETTES")) %>% ## REMOVE ALCOHOL 
+  mutate(description = factor(description) %>% fct_rev()) %>% 
+  mutate(se = sqrt(prop * (1- prop) / n),
+         lower = prop + se * qnorm(0.025),
+         upper = prop + se * qnorm(0.975)) %>% 
+  mutate(lower = ifelse(lower <= 0, 0, lower),
+         upper = ifelse(upper >= 1, 1, upper)) %>% 
+  drop_na() %>% 
+  ggplot(aes(year, prop)) +
+  geom_pointrange(aes(ymin = lower, ymax = upper), size = 1/10) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, group = description, fill = description), alpha = 1/2) +
+  geom_line(aes(group = description, color = description)) +
+  labs(x = NULL, y = NULL, title = "Past Year Use", fill = NULL, color = NULL) +
+  scale_y_continuous(labels = scales::percent_format(1)) + 
+  theme_minimal(base_family = "Avenir Next Condensed") +
+  theme(legend.position = "top",
+        plot.title = element_text(face = "bold", size = 16)) 
+
+ggsave("nsduh_popular_drugs.png", device = "png", dpi = "print",
        width = 10, height = 6)

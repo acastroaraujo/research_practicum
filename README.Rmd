@@ -21,12 +21,18 @@ __Drug coverage:__
 knitr::include_graphics("nsduh_coverage.png")
 ```
 
-__Drug usage:__
+__Race usage by race:__
+
+```{r, out.width="100%", echo=FALSE}
+knitr::include_graphics("nsduh_race_drugs.png")
+```
+
+
+__Drug usage (overall):__
 
 ```{r, out.width="100%", echo=FALSE}
 knitr::include_graphics("nsduh_counts.png")
 ```
-
 
 Some of the proportions —especially around `2015`— might give misleading results if the question changes:
 
@@ -50,5 +56,11 @@ And is structured like this:
 
 ```{r}
 fs::dir_tree("raw_data")
+```
+
+## Extra stuff
+
+```{r, out.width="100%", echo=FALSE}
+knitr::include_graphics("nsduh_popular_drugs.png")
 ```
 

@@ -41,13 +41,14 @@ df <- read_dta(waves_df$datasets[[x]], n_max = N)
            !str_detect(description, "CIGARS|TOBACCO|ONLY"),
            !str_detect(description, "^CPN "),
            !str_detect(description, "ILLICIT DRUG")) %>% 
-    mutate(year = waves_df$year[[x]])
+    mutate(year = waves_df$year[[x]]) %>% 
+    mutate(var = str_to_lower(var)) 
   
   return(dict)
   
 }
 
-clean_description <- function(x) {
+clean_past_year_description <- function(x) {
   
   x %>% 
     str_remove_all('\"|\'') %>% 
@@ -55,6 +56,24 @@ clean_description <- function(x) {
     str_remove(" ?- ?.*USE$") %>% 
     str_remove("^ANY ")
 }
+
+extract_race_vars <- function(x, N = 10) {
+  
+  df <- read_dta(waves_df$datasets[[x]], n_max = N)
+  
+  dict <- tibble(
+    var = names(df),
+    description = seq_along(df) %>% map_chr(function(i) attr(df[[i]], "label"))
+  ) %>% 
+    filter(str_detect(description, "RACE")) %>% 
+    mutate(year = waves_df$year[[x]]) %>% 
+    mutate(var = str_to_lower(var)) %>% 
+    filter(str_detect(var, "irrace|newrace2")) 
+  
+  return(dict)
+  
+}
+
 
 # Extract all "PAST YEAR" variables ---------------------------------------
 
@@ -67,7 +86,7 @@ for (i in seq_along(output)) {
   
 temp <- bind_rows(output) %>% 
   mutate(var = str_to_lower(var)) %>% 
-  mutate(description = map_chr(description, clean_description)) %>%
+  mutate(description = map_chr(description, clean_past_year_description)) %>%
   distinct(var, description) %>% 
   mutate(description = case_when(
     description == "PAIN RELIEVERS" ~ "ANALGESICS",
@@ -75,14 +94,19 @@ temp <- bind_rows(output) %>%
     description == "METHAMPHETAMINE" ~ "METHAMPHETAMINES",
     TRUE ~ description
   )) %>% 
-  distinct(var, description) 
+  distinct(var, description) %>% 
+  filter(var != "mthmon") ## mislabelled month as year
   
 year_coverage <- bind_rows(output) %>% 
   mutate(var = str_to_lower(var)) %>% 
+  filter(var != "mthmon") %>% 
   select(!description) %>% 
   left_join(temp) %>%
   distinct(var, year, description) %>% ## this removes repeated 1994 data
   add_count(description)
+
+# Save to RDS file
+write_rds(year_coverage, "coverage.rds", compress = "gz")
 
 # Save to Excel file
 year_coverage %>% 
@@ -118,5 +142,20 @@ df %>%
   
 ggsave("nsduh_coverage.png", device = "png", dpi = "print",
        width = 10, height = 5)
+
+
+
+# Extract all RACE vars ---------------------------------------------------
+
+output <- vector("list", length = nrow(waves_df))
+
+for (i in seq_along(output)) {
+  output[[i]] <- extract_race_vars(i)
+}
+
+
+write_rds(bind_rows(output), "race_coverage.rds", compress = "gz")
+
+
 
 
