@@ -159,3 +159,28 @@ write_rds(bind_rows(output), "race_coverage.rds", compress = "gz")
 
 
 
+# Extract weights ---------------------------------------------------------
+
+extract_weight <- function(x, N = 10) {
+  
+  df <- read_dta(waves_df$datasets[[x]], n_max = N)
+  
+  dict <- tibble(
+    var = str_to_lower(names(df)),
+    description = seq_along(df) %>% map_chr(function(i) attr(df[[i]], "label"))
+  ) %>% 
+    filter(var %in% c("analwt_c", "analwt")) %>% 
+    mutate(year = waves_df$year[[x]]) 
+
+  return(dict)  
+}
+
+
+output <- vector("list", length = nrow(waves_df))
+
+for (i in seq_along(output)) {
+  output[[i]] <- extract_weight(i)
+}
+
+
+write_rds(bind_rows(output), "weight_coverage.rds", compress = "gz")

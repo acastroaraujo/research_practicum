@@ -3,7 +3,6 @@
 # 1. Figure out the weights
 # 2. Demographics
 
-
 # Set up ------------------------------------------------------------------
 
 library(tidyverse)
@@ -14,6 +13,8 @@ theme_set(
 
 coverage <- read_rds("coverage.rds") %>% 
   filter(n >= 16)
+
+weights <- read_rds("weight_coverage.rds")
 
 # Raw Data
 
@@ -30,23 +31,27 @@ waves_df <- tibble(year = as.integer(dir("raw_data")), datasets) %>%
 
 extract_all_props <- function(i) {
   
+  all_variables <- unique(c(coverage$var, str_to_upper(coverage$var), weights$var, str_to_upper(weights$var)))
+  lower_case_variables <- unique(c(coverage$var, weights$var))
+  
   df <- read_dta(
     file = waves_df$datasets[[i]], 
-    col_select = any_of(c(coverage$var, str_to_upper(coverage$var)))
+    col_select = any_of(all_variables)
   )
   
   colnames(df) <- str_to_lower(colnames(df))
   
   out <- df %>% 
-    select(any_of(coverage$var)) %>% 
+    select(any_of(lower_case_variables)) %>% 
+    rename_with(~ "weight", any_of(unique(weights$var))) %>% 
     haven::zap_labels() %>% 
-    pivot_longer(cols = everything(), names_to = "var", values_to = "x") %>% 
+    pivot_longer(cols = any_of(coverage$var), names_to = "var", values_to = "x") %>% 
     group_by(var) %>% 
-    summarize(prop = mean(x), n = sum(x)) %>% 
+    summarize(prop = mean(x), n = sum(x),
+              w_prop = sum(weight*x) / sum(weight), w_n = sum(weight*x)) %>% 
     left_join(distinct(coverage, var, description)) %>% 
     mutate(year = waves_df$year[[i]])
 }
-
 
 
 # Extract all proportions -------------------------------------------------
@@ -89,11 +94,32 @@ df %>%
   scale_fill_viridis_c(option = "magma", direction = -1, na.value = "grey90") +
   labs(x = NULL, y = NULL, title = "NSDUH Usage", 
        fill = "log(n)", 
-       subtitle = 'questions related to "past year use"') +
+       subtitle = 'questions related to "past year use"',
+       caption = "unweighted") +
   theme(legend.position = "bottom",
         legend.key.width = unit(0.09,"npc")) 
 
 ggsave("nsduh_counts.png", device = "png", dpi = "print",
+       width = 10, height = 6)
+
+
+## weighted
+
+df %>% 
+  #filter(!str_detect(description, "ALCOHOL|CIGARETTES|MARIJUANA|PSYCHOTHERAPEUTICS|ANALGESICS")) %>% ## REMOVE ALCOHOL
+  mutate(description = factor(description) %>% fct_rev()) %>%
+  ggplot(aes(factor(year), description, fill = log(w_n))) + 
+  geom_tile(color = "white") +
+  scale_x_discrete(guide = guide_axis(angle = 90)) + 
+  scale_fill_viridis_c(option = "magma", direction = -1, na.value = "grey90") +
+  labs(x = NULL, y = NULL, title = "NSDUH Usage", 
+       fill = "log(n)", 
+       subtitle = 'questions related to "past year use"',
+       caption = "weighted") +
+  theme(legend.position = "bottom",
+        legend.key.width = unit(0.09,"npc")) 
+
+ggsave("nsduh_counts_weighted.png", device = "png", dpi = "print",
        width = 10, height = 6)
 
 
@@ -118,3 +144,5 @@ df %>%
 
 ggsave("nsduh_popular_drugs.png", device = "png", dpi = "print",
        width = 10, height = 6)
+
+
