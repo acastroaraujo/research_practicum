@@ -38,12 +38,11 @@ url <- "https://docs.google.com/spreadsheets/d/1CUUyXMpQD2aTZdtgS7ah6nhIegPqRLEu
 out <- local_scrape("articles/NYT-1990-1995.html")
 
 set.seed(12345)
-s <- sample(out$title, size = 5)
-out$testing <-  out$title %in% s
+s <- sample(out$url, size = 5)
 
 out %>% 
   arrange(date) %>% 
-  mutate(testing = title %in% s) %>% 
+  mutate(testing = url %in% s) %>%
   sheet_write(url, sheet = "1990-1995")
 
 
