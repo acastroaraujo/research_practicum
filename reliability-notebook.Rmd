@@ -1,0 +1,123 @@
+---
+title: "Coding Scheme"
+author: "andrés castro araújo"
+date: "4/5/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Reliability
+
+```{r, message=FALSE}
+library(tidyverse)
+library(googlesheets4)
+source("utilities.R")
+
+url <- "https://docs.google.com/spreadsheets/d/1CUUyXMpQD2aTZdtgS7ah6nhIegPqRLEutIJgp0-vIYI/"
+```
+
+The `utilities.R` file has three functions:
+
+-   `check_lenght()`
+
+### Entity level
+
+Read the data from Google Sheets
+
+```{r}
+andres <- read_sheet(ss = url, sheet = "andres") %>% 
+  filter(!is.na(id)) %>% 
+  mutate(coder = "andres") %>% 
+  select(!entity_size)
+
+aly <- read_sheet(ss = url, sheet = "aly") %>% 
+  filter(!is.na(id)) %>% 
+  mutate(coder = "aly") %>% 
+  select(!entity_size)
+
+lindsay <- read_sheet(ss = url, sheet = "lindsay") %>% 
+  filter(!is.na(id)) %>% 
+  mutate(coder = "lindsay") %>% 
+  select(!entity_size)
+
+```
+
+**Check lengths:**
+
+There should be 100% agreement on number of entities before proceeding to the other stuff.
+
+```{r}
+check_length(andres, aly, lindsay)
+```
+
+We can also do pairwise comparisons with the same function, which is what each of us will have to do for the double coding checking.
+
+```{r}
+check_length(andres, aly)
+check_length(andres, lindsay)
+check_length(aly, lindsay)
+```
+
+**Entity level variables:**
+
+We can check the overall reliability with the `agreement()` function.
+
+```{r}
+df <- bind_rows(aly, andres, lindsay)
+
+agreement(df, "type")
+agreement(df, "race")
+agreement(df, "marijuana_role")
+agreement(df, "criminal_activity")
+agreement(df, "cjs_involvement")
+agreement(df, "decriminalization")
+agreement(df, "med_involvement")
+agreement(df, "legal_controversy")
+```
+
+We can now see the specific details using the `check_disagreements()` function
+
+```{r}
+check_disagreements(aly, lindsay, "legal_controversy")
+check_disagreements(aly, lindsay, "race")
+```
+
+### Article level
+
+Read the data from Google Sheets:
+
+```{r}
+andres_article <- read_sheet(ss = url, sheet = "andres_data") %>% 
+  filter(!is.na(id), !remove) %>% 
+  mutate(coder = "andres") 
+
+aly_article <- read_sheet(ss = url, sheet = "aly_data") %>% 
+  filter(!is.na(id), !remove) %>% 
+  mutate(coder = "aly") 
+
+lindsay_article <- read_sheet(ss = url, sheet = "lindsay_data") %>% 
+  filter(!is.na(id), !remove) %>% 
+  mutate(coder = "lindsay") 
+```
+
+See overall agreements
+
+```{r}
+df_article <- bind_rows(aly_article, andres_article, lindsay_article)
+
+agreement(df_article, "date")
+agreement(df_article, "entities")
+agreement(df_article, "medicalization")
+agreement(df_article, "cjs")
+agreement(df_article, "calls_for")
+agreement(df_article, "remove")
+```
+
+See more detail:
+
+```{r}
+check_disagreements(lindsay_article, andres_article, "calls_for")
+```
