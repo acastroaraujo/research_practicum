@@ -1,0 +1,94 @@
+---
+title: "final results"
+author: "andrés castro araújo"
+date: "4/22/2021"
+output: 
+  html_document:
+    theme: lumen
+    code_folding: hide
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  fig.align = "center",
+  fig.width = 10,
+  fig.height = 6
+  )
+
+library(tidyverse)
+
+theme_set(
+  theme_minimal(base_family = "Avenir Next Condensed", base_line_size = 0) +
+    theme(plot.title = element_text(face = "bold", size = 16))
+)
+
+
+```
+
+```{r, eval=FALSE}
+library(googlesheets4)
+adj_url <- "https://docs.google.com/spreadsheets/d/1rVJlX218mXp1K8YCh_g_FpvHJuQVTa-pZEkVHcm_jvU/"
+
+
+df_article <- read_sheet(ss = adj_url, sheet = "d_article") 
+df_entities <- read_sheet(ss = adj_url, sheet = "d_entity") 
+
+df_art <- full_join(
+  
+  df_article,
+  
+  df_entities %>% 
+  group_by(id) %>% 
+  summarize(
+    clinton = any(clinton),
+    n = n(),
+    n_category = sum(type == "category", na.rm = TRUE),
+    n_individual = sum(type == "individual", na.rm = TRUE),
+    n_group = sum(type == "group", na.rm = TRUE),
+    n_black = sum(race == "black", na.rm = TRUE),
+    n_white = sum(race == "white", na.rm = TRUE),
+    n_hispanic = sum(race == "hispanic", na.rm = TRUE),
+    n_user = sum(marijuana_role == "user", na.rm = TRUE),
+    n_supplier = sum(marijuana_role == "supplier", na.rm = TRUE),
+    n_producer = sum(marijuana_role == "producer", na.rm = TRUE),
+    n_cjs_involvement = sum(cjs_involvement, na.rm = TRUE),
+    n_decriminalization = sum(decriminalization, na.rm = TRUE),
+    n_med_involvment = sum(med_involvement, na.rm = TRUE),
+    n_legal_controversy = sum(legal_controversy, na.rm = TRUE)
+    )
+  )
+
+df_ent <- df_entities %>% 
+  left_join(
+    df_article %>% select(c(id, art_med = medicalization, art_cjs = cjs, calls_for))
+    ) %>% 
+  ungroup()
+
+rm(df_entities)
+rm(df_article)
+rm(df)
+
+write_rds(df_art, "df_art.rds")
+write_rds(df_ent, "df_ent.rds")
+```
+
+```{r}
+df_art <- read_rds("df_art.rds")
+df_ent <- read_rds("df_ent.rds")
+```
+
+## Part 1
+
+Does the extent to which marijuana is talked about in criminal terms change over time?​
+
+```{r}
+df_art %>% 
+  group_by(period) %>% 
+  summarize(across(c(cjs, medicalization), mean))
+```
+
+
+
