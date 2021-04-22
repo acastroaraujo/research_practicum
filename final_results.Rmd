@@ -80,15 +80,28 @@ df_art <- read_rds("df_art.rds")
 df_ent <- read_rds("df_ent.rds")
 ```
 
-## Part 1
+## Q1
 
 Does the extent to which marijuana is talked about in criminal terms change over time?​
 
 ```{r}
-df_art %>% 
+se_prop <- function(x) {
+  sqrt(mean(x)*(1-mean(x)) / length(x))
+}
+
+
+q1 <- df_art %>% 
   group_by(period) %>% 
-  summarize(across(c(cjs, medicalization), mean))
+  summarize(across(medicalization, c(n = length, avg = mean, se = se_prop)))
+
+
 ```
 
+```{r}
+sqrt(0.1538462*(1-0.1538462) / 65)
+```
 
+```{r}
+
+```
 
